@@ -13,3 +13,44 @@
 # Для решения данной задачи используйте алгоритмы из задания easy,
 # оформленные в виде соответствующих функций,
 # и импортированные в данный файл из easy.py
+import os
+from hw05_easy import *
+
+def shap():
+        print("\n1. Перейти в папку\n"
+              "2. Просмотреть содержимое текущей папки\n"
+              "3. Удалить папку\n"
+              "4. Создать папку\n")
+
+while True:
+        shap()
+        inp = input("Введите значение: ")
+        if inp == '1':
+                list_dir()
+                inp_go = input("\nВ какую папку необходимо перейти: ")
+                if os.path.isdir(inp_go):
+                        os.chdir(inp_go)
+                        print("\nВы успешно перешли в директорию: " + os.getcwd())
+                else:
+                        print("\nНесуществующая директория!")
+        elif inp == '2':
+                list_dir()
+        elif inp == '3':
+                list_dir()
+                inp_del = input("\nКакую папку, желаете удалить? ")
+                if os.path.isdir(inp_del):
+                        del_dir(inp_del)
+                        print("\nПапка " + inp_del + " успешно удалена!")
+                else:
+                        print("\nНесуществующая директория!")
+        elif inp == '4':
+                list_dir
+                inp_sav = input("Укажите имя новой папки? ")
+                if inp_sav not in list_dir():
+                        save_dir(inp_sav)
+                        print("\nПапка " + inp_sav + " успешно создана!")
+                else:
+                        print("\nПапка с таким названием существует!")
+        else:
+                print("\t\t\nНеверное значение!!!")
+
