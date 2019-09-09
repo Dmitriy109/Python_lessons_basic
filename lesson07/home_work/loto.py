@@ -57,3 +57,93 @@
 модуль random: http://docs.python.org/3/library/random.html
 
 """
+import random
+import numpy as np
+
+num_matrix = [itm for itm in range(1, 90)]
+
+#@decor
+def cart():
+    f_matrix = np.array(random.sample(num_matrix, 9*3)).reshape(3, 9)
+    f_matrix = np.array(([sorted(itm) for itm in f_matrix]), int)
+    for itm in f_matrix:
+        i = 0
+        while i < 4:
+            box = random.randint(0, 8)
+            if itm[box] != 0:
+                itm[box] = 0
+                i +=1
+    return f_matrix
+
+user = cart()
+bot = cart()
+
+def num(pix,ans):
+    #print(num_matrix)
+    num_matrix.remove(pix)
+    result_1 = np.where(bot == pix)
+    result_2 = np.where(user == pix)
+    if result_1:
+        bot[result_1] = -1
+
+    if result_2:
+        if ans == 'y':
+            if pix in user[result_2]:
+                user[result_2] = -1
+                return True
+            else:
+                print("Такого числа в вашем билете нет")
+                return False
+        elif ans == 'n':
+            if pix in user[result_2]:
+                print('К сожалению число было в карте!')
+                return False
+            else:
+                return True
+
+def decor(render):
+    def wrapper(data, name):
+        print(f'---------- Карточка {name} -------------')
+        render(data,name)
+        print('----------------------------------------\n')
+
+    return wrapper
+@decor
+def render(data, name):
+    text = ''
+    for i in data:
+        for itm in i:
+            if itm == 0:
+                text = text + '   '
+            elif itm == -1:
+                text = text + ' — '
+            else:
+                text = text + '   ' +str(itm)
+        text = text + '\n'
+    print(text)
+    #print(' '.join(res))
+
+
+while True:
+    if user.sum() == -15 or bot.sum() == -15:
+        if user.sum() == -15:
+            print('Ура! Ты победил!')
+            break
+        elif bot.sum() == -15:
+            print('Ты проиграл!')
+            break
+
+    render(bot, 'Bot')
+    render(user, 'User')
+
+    pix = random.choice(num_matrix)
+    numa = len(num_matrix)
+    ans = input(f'Новый бочонок: {pix}!!! (осталось {numa}). Зачеркнуть цифру? (y/n) ')
+
+    if num(pix,ans) is False:
+        print('Игра окончена!')
+        break
+
+
+
+
