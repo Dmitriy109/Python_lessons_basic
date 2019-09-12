@@ -122,4 +122,105 @@ OpenWeatherMap — онлайн-сервис, который предостав�
         ...
 
 """
+import os
+import sqlite3 as lite
+import urllib.request
+from xml.etree import ElementTree as ET
 
+
+class Weather(object):
+    def url_request(self, city_id):
+        while True:
+            try:
+                urllib.request.urlretrieve('http://export.yandex.ru/weather-ng/forecasts/{}.xml'.format(city_id),
+                                           'd:/python/weather/{}.xml'.format(city_id))
+                break
+            except:
+                continue
+
+    def day_date(self, city_id):
+        f = open('d:/python/weather/{}.xml'.format(city_id), 'r')
+        forecast = f.read()
+        root = ET.fromstring(forecast)
+        date = root.find('.//{http://weather.yandex.ru/forecast}day').attrib
+        return date['date']
+
+    def night_short(self, city_id):
+        f = open('d:/python/weather/{}.xml'.format(city_id), 'r')
+        forecast = f.read()
+        root = ET.fromstring(forecast)
+        temperature = root.find('.//{http://weather.yandex.ru/forecast}day_part[@type="night_short"]/').text
+        return temperature
+
+    def day_short(self, city_id):
+        f = open('d:/python/weather/{}.xml'.format(city_id), 'r')
+        forecast = f.read()
+        root = ET.fromstring(forecast)
+        temperature = root.find('.//{http://weather.yandex.ru/forecast}day_part[@type="day_short"]/').text
+        return temperature
+
+
+def create_table():
+    con = lite.connect('d:/python/weather/weather.db')
+    with con:
+        cur = con.cursor()
+        cur.execute("""CREATE TABLE IF NOT EXISTS Погода
+                   (Id INTEGER PRIMARY KEY, Город VARCHAR(255), Дата DATE,
+                    Температура_днем INTEGER, Температура_ночью INTEGER )""")
+
+    if not os.path.exists('d:/python/weather/cities.db'):
+        urllib.request.urlretrieve('http://weather.yandex.ru/static/cities.xml', 'd:/python/weather/cities.xml')
+    tree = ET.parse('d:/python/weather/cities.xml')
+    root = tree.getroot()
+    list_city = []
+
+    for child in root:
+        list_city.append(child.attrib['name'])
+        print('--->', child.attrib['name'])
+
+    s = True
+    weather = Weather()
+    while s == True:
+        country_id = input('Выбирете страну из списка и введите название или введите quit для выхода из программы:')
+        if country_id in list_city:
+            for country in root.findall('country'):
+                if country.get('name') == country_id:
+                    for city in country.iter('city'):
+                        weather.url_request(city.get('id'))
+                        id_city = [city.get('id'), city.text, weather.day_date(city.get('id')),
+                                   weather.day_short(city.get('id')), weather.night_short(city.get('id'))]
+                        con = lite.connect('.')
+                        print(id_city)
+                        try:
+                            with con:
+                                cur = con.cursor()
+                                cur.execute("INSERT INTO Погода VALUES (?,?,?,?,? );", id_city)
+                                con.commit()
+                        except:
+                            with con:
+                                cur = con.cursor()
+                                cur.execute("UPDATE  Погода SET  Дата=? WHERE ID=?",
+                                            (weather.day_date(city.get('id')), city.get('id')))
+                                cur.execute("UPDATE Погода SET Температура_днем=? WHERE ID=?",
+                                            (weather.day_short(city.get('id')), city.get('id')))
+                                cur.execute("UPDATE Погода SET Температура_ночью=? WHERE ID=?",
+                                            (weather.night_short(city.get('id')), city.get('id')))
+                                con.commit()
+
+            with con:
+                cur = con.cursor()
+                cur.execute("SELECT * FROM Погода")
+                rows = cur.fetchall()
+
+            for row in rows:
+                print(row)
+            s = False
+
+        elif country_id == 'quit':
+                break
+        else:
+            print('Введите страну из списка или quit для выхода из программы! :')
+
+
+if __name__ == '__main__':
+    create_table()
